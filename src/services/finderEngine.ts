@@ -1,6 +1,7 @@
 import { DexScreenerNewApiService } from './dexscreenerNewApi';
 import { RugCheckService } from './rugcheckService';
 import { PumpPortalService } from './pumpPortalService';
+import { HeliusService, HELIUS_API_KEY, HELIUS_RPC_URL } from './heliusService';
 import { RiskFilter, DEFAULT_FILTER_CONFIG } from '../filters/riskFilter';
 import {
   MemeCoinSignal,
@@ -8,14 +9,15 @@ import {
   FilterPresetId,
   FinderStats,
   DexPairData,
-  DexSocialLink
+  DexSocialLink,
+  RugCheckReport
 } from '../types';
 
-export const HELIUS_RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=dfc72823-152b-468b-936e-57935ae27b08';
+export { HELIUS_API_KEY, HELIUS_RPC_URL };
 
 export class FinderEngine {
   private static filter = new RiskFilter({
-    heliusApiKey: 'dfc72823-152b-468b-936e-57935ae27b08',
+    heliusApiKey: HELIUS_API_KEY,
   });
   private static scannedMints = new Set<string>();
   private static tokenStore = new Map<string, MemeCoinSignal>();
@@ -148,7 +150,6 @@ export class FinderEngine {
     const config = this.filter.getConfig();
 
     if (this.activePreset === 'almost_safe') {
-      // NEAR SAFE HAVEN: Tokens that pass RugCheck contract safety (Gate 0 passed & RugCheck <= 500) and have $500+ metrics
       return all
         .filter((s) => s.passedGate0 && s.rugCheckScore <= 500 && (s.marketCapUsd >= 500 || s.liquidityUsd >= 500))
         .sort((a, b) => b.score - a.score || b.marketCapUsd - a.marketCapUsd);
@@ -277,7 +278,25 @@ export class FinderEngine {
     description?: string,
     boostCount?: number
   ): Promise<MemeCoinSignal | null> {
-    const rugCheck = await RugCheckService.getReport(mint);
+    // 1. PRIMARY HELIUS RPC ASSET LOOKUP (DEFAULT SOURCE)
+    const heliusAsset = await HeliusService.getTokenAsset(mint);
+
+    // 2. RugCheck API Safety Report
+    let rugCheck = await RugCheckService.getReport(mint);
+
+    // Override / Enrich authority status with Helius RPC data if available
+    if (heliusAsset) {
+      rugCheck = {
+        ...rugCheck,
+        token: {
+          mintAuthority: heliusAsset.mintAuthority,
+          freezeAuthority: heliusAsset.freezeAuthority,
+          supply: heliusAsset.supply,
+          decimals: heliusAsset.decimals,
+        },
+      };
+    }
+
     const evaluation = this.filter.evaluateToken(rugCheck, pair || undefined);
 
     const buys5m = pair?.txns?.m5?.buys ?? 0;
@@ -315,9 +334,9 @@ export class FinderEngine {
 
     const signal: MemeCoinSignal = {
       mint,
-      name: pair?.baseToken?.name || fallbackName || 'Unknown Meme',
-      symbol: pair?.baseToken?.symbol || fallbackSymbol || 'MEME',
-      logoUrl: pair?.info?.imageUrl || logoUrl,
+      name: heliusAsset?.name || pair?.baseToken?.name || fallbackName || 'Unknown Meme',
+      symbol: heliusAsset?.symbol || pair?.baseToken?.symbol || fallbackSymbol || 'MEME',
+      logoUrl: heliusAsset?.logoUrl || pair?.info?.imageUrl || logoUrl,
       headerUrl,
       description,
       priceUsd: pair?.priceUsd ?? 0,
