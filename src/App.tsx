@@ -207,8 +207,27 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* RUGCHECK ONLY WARNING CALLOUT BANNER */}
-        {activePreset === 'rugcheck_only' ? (
+        {/* NEAR SAFE HAVEN BANNER CALLOUT */}
+        {activePreset === 'almost_safe' ? (
+          <div className="mb-6 bg-gradient-to-r from-cyan-950/80 via-slate-900/80 to-emerald-950/80 border border-cyan-500/40 rounded-2xl p-5 shadow-2xl animate-fadeIn">
+            <div className="flex items-start space-x-4">
+              <div className="p-3 bg-cyan-500/20 text-cyan-400 rounded-xl border border-cyan-500/40">
+                <Zap className="w-6 h-6 animate-pulse" />
+              </div>
+              <div className="space-y-1">
+                <div className="font-extrabold text-cyan-300 text-sm flex items-center space-x-2">
+                  <span>⚡ NEAR SAFE HAVEN MODE (HIGH VOLUME FEED)</span>
+                  <span className="text-[10px] font-black px-2.5 py-0.5 bg-cyan-500/30 text-cyan-200 rounded-md border border-cyan-500/40">
+                    $500+ METRICS NEAR MISSES
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Showing early tokens that pass <strong>RugCheck contract safety audit</strong> (Mint Revoked: NULL, Freeze Revoked: NULL, Score &le; 500) and have <strong>$500+ Market Cap & Liquidity</strong>. Perfect for catching early gems right before they hit full $1,000 Safe Haven status!
+                </p>
+              </div>
+            </div>
+          </div>
+        ) : activePreset === 'rugcheck_only' ? (
           <div className="mb-6 bg-gradient-to-r from-amber-950/80 via-red-950/80 to-slate-900/90 border border-amber-500/50 rounded-2xl p-5 shadow-2xl animate-fadeIn">
             <div className="flex items-start space-x-4">
               <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/40">
@@ -277,6 +296,19 @@ export default function App() {
                 <span>Safe Haven ($1k Mins)</span>
               </button>
 
+              {/* NEAR SAFE HAVEN PRESET BUTTON */}
+              <button
+                onClick={() => handlePresetChange('almost_safe')}
+                className={`px-4 py-2 rounded-xl text-sm font-bold flex items-center space-x-2 transition-all cursor-pointer ${
+                  activePreset === 'almost_safe'
+                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20 font-bold'
+                    : 'bg-cyan-950/40 text-cyan-300 border border-cyan-500/30 hover:bg-cyan-900/50'
+                }`}
+              >
+                <Zap className="w-4 h-4 text-cyan-400" />
+                <span>⚡ Near Safe Haven ($500 Mins)</span>
+              </button>
+
               <button
                 onClick={() => handlePresetChange('high_momentum')}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all cursor-pointer ${
@@ -298,7 +330,7 @@ export default function App() {
                 }`}
               >
                 <Flame className="w-4 h-4" />
-                <span>Fresh Pump.fun ($1k Mins)</span>
+                <span>Fresh Pump.fun ($500 Mins)</span>
               </button>
 
               <button
@@ -448,9 +480,9 @@ export default function App() {
         {displayedSignals.length === 0 ? (
           <div className="glass-panel p-12 text-center rounded-2xl space-y-4">
             <Filter className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-300">Scanning RugCheck API (Auto Reloading Every 3s)...</h3>
+            <h3 className="text-lg font-bold text-slate-300">Scanning for tokens...</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Auto reload active ({autoScanEnabled ? 'ON - 3s' : 'PAUSED'}). Filtering tokens that have <strong>ACTUALLY PASSED RugCheck API audit</strong> (Mint & Freeze Revoked, Score &le; 500).
+              Auto reload active ({autoScanEnabled ? 'ON - 3s' : 'PAUSED'}). Filtering tokens that have <strong>ACTUALLY PASSED RugCheck API audit</strong>. Click "Scan Now" to force fetch latest profile data.
             </p>
             <button
               onClick={handleScan}
@@ -468,8 +500,8 @@ export default function App() {
                 <div
                   key={token.mint}
                   className={`glass-card p-5 rounded-2xl relative flex flex-col justify-between space-y-4 border ${
-                    activePreset === 'rugcheck_only'
-                      ? 'border-amber-500/40 bg-slate-900/90'
+                    activePreset === 'almost_safe'
+                      ? 'border-cyan-500/40 bg-slate-900/90 shadow-lg shadow-cyan-500/10'
                       : token.score >= 75
                       ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10'
                       : 'border-slate-800'

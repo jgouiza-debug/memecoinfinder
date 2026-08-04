@@ -1,4 +1,4 @@
-export type FilterPresetId = 'safe_haven' | 'high_momentum' | 'fresh_launches' | 'top_boosted' | 'rugcheck_only' | 'custom';
+export type FilterPresetId = 'safe_haven' | 'almost_safe' | 'high_momentum' | 'fresh_launches' | 'top_boosted' | 'rugcheck_only' | 'custom';
 
 export interface DexSocialLink {
   type?: string;
@@ -39,7 +39,7 @@ export interface DexPairData {
   quoteToken: {
     address: string;
     name: string;
-    symbol: symbol | string;
+    symbol: string;
   };
   priceNative: string;
   priceUsd: number;
@@ -130,10 +130,10 @@ export interface FilterConfig {
   requireMintRevoked: boolean;      // Require mint authority to be null
   requireFreezeRevoked: boolean;    // Require freeze authority to be null
   minLpLockedPct: number;           // Min % of LP locked/burned
-  minFdvUsd: number;                // Min FDV ($1,000)
-  minMarketCapUsd: number;          // Min market cap ($1,000)
-  minLiquidityUsd: number;          // Min liquidity ($1,000)
-  minVolume5mUsd: number;           // Min 5m volume ($1,000)
+  minFdvUsd: number;                // Min FDV
+  minMarketCapUsd: number;          // Min market cap
+  minLiquidityUsd: number;          // Min liquidity
+  minVolume5mUsd: number;           // Min 5m volume
   maxBundledSupplyPct: number;      // Max % supply bundled at creation
   maxInsiderPct: number;            // Max insider holding %
   maxSniperHoldingsPct: number;     // Max sniper holding %
@@ -141,10 +141,10 @@ export interface FilterConfig {
   maxSingleHolderPct: number;       // Max single holder %
   maxDevHoldingsPct: number;        // Max dev wallet holding %
   minBuyPressurePct: number;        // Min buys / total txns % over 5m
-  maxNegativePriceChange5mPct: number; // Max allowed drawdown % over 5m (e.g. -35%)
+  maxNegativePriceChange5mPct: number; // Max allowed drawdown % over 5m
   maxWashScore: number;             // Max wash trading churn score (0-100)
   minOverallScoreToPass: number;    // Overall safety score required (0-100)
-  onlySafeCoins: boolean;           // Zero-tolerance filter: ONLY show safe coins, no BS coins
+  onlySafeCoins: boolean;           // Zero-tolerance filter
   heliusApiKey?: string;            // Helius RPC API Key
 }
 
