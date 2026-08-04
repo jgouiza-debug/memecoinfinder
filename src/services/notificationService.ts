@@ -9,13 +9,14 @@ export class NotificationService {
     }
   }
 
+  /**
+   * Loud, crisp, resonant metallic "DING!" bell sound synthesizer
+   */
   public static playChime(): void {
     try {
-      if (!this.audioCtx) {
-        const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-        if (AudioContextClass) {
-          this.audioCtx = new AudioContextClass();
-        }
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      if (!this.audioCtx && AudioContextClass) {
+        this.audioCtx = new AudioContextClass();
       }
 
       if (this.audioCtx) {
@@ -24,25 +25,41 @@ export class NotificationService {
         }
 
         const now = this.audioCtx.currentTime;
-        const osc = this.audioCtx.createOscillator();
-        const gain = this.audioCtx.createGain();
 
-        osc.type = 'sine';
-        // Play an ascending chime chord (E5 to A5)
-        osc.frequency.setValueAtTime(659.25, now); // E5
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.15); // A5
+        // Primary high bell tone (C6 = 1046.5Hz)
+        const osc1 = this.audioCtx.createOscillator();
+        const gain1 = this.audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(1046.5, now);
 
-        gain.gain.setValueAtTime(0.3, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        // Loud bell attack & metallic ring decay
+        gain1.gain.setValueAtTime(0.9, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
 
-        osc.connect(gain);
-        gain.connect(this.audioCtx.destination);
+        osc1.connect(gain1);
+        gain1.connect(this.audioCtx.destination);
 
-        osc.start(now);
-        osc.stop(now + 0.35);
+        // Overtone harmonic bell tone (C7 = 2093Hz) for crisp metallic "DING" resonance
+        const osc2 = this.audioCtx.createOscillator();
+        const gain2 = this.audioCtx.createGain();
+        osc2.type = 'triangle';
+        osc2.frequency.setValueAtTime(2093, now);
+
+        gain2.gain.setValueAtTime(0.5, now);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.8);
+
+        osc2.connect(gain2);
+        gain2.connect(this.audioCtx.destination);
+
+        // Start both bell oscillators simultaneously
+        osc1.start(now);
+        osc1.stop(now + 1.2);
+
+        osc2.start(now);
+        osc2.stop(now + 0.8);
       }
     } catch (e) {
-      // Audio playback fallback
+      // Audio fallback
     }
   }
 
