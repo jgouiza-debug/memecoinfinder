@@ -23,9 +23,11 @@ import {
   Sparkles,
   Lock,
   Play,
-  Pause
+  Pause,
+  AlertOctagon,
+  Cpu
 } from 'lucide-react';
-import { FinderEngine } from './services/finderEngine';
+import { FinderEngine, HELIUS_RPC_URL } from './services/finderEngine';
 import { MemeCoinSignal, FilterPresetId, FinderStats, FilterConfig } from './types';
 
 export default function App() {
@@ -65,7 +67,6 @@ export default function App() {
     };
   }, []);
 
-  // Handle Auto-Scan Interval Loop
   useEffect(() => {
     if (!autoScanEnabled) return;
 
@@ -138,13 +139,13 @@ export default function App() {
                   Meme Coin Finder <span className="gradient-text-emerald">Bot</span>
                 </h1>
                 <span className="px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center space-x-1">
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>EARLY PRE-PUMP FILTER</span>
+                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>HELIUS RPC CONNECTED</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                 <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>Auto Scan Loop | Max $60k MC/FDV | Max +150% 5m Gain</span>
+                <span>Helius RPC (dfc72823...) & RugCheck Audit Pipeline</span>
               </p>
             </div>
           </div>
@@ -162,7 +163,7 @@ export default function App() {
             <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <div>
-                <div className="text-xs text-slate-400">Early Safe Gems</div>
+                <div className="text-xs text-slate-400">Audit Passed</div>
                 <div className="font-bold text-emerald-400">{stats.passedFilters} Coins</div>
               </div>
             </div>
@@ -205,37 +206,58 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
-        {/* Safe Filter Badge Callout */}
-        <div className="mb-6 bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-cyan-950/60 border border-emerald-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
-              <Lock className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="font-extrabold text-white text-sm flex items-center space-x-2">
-                <span>🛡️ ZERO BS & EARLY PRE-PUMP COIN GUARANTEE</span>
-                <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">STRICT ENFORCEMENT</span>
+        {/* RUGCHECK ONLY WARNING CALLOUT BANNER */}
+        {activePreset === 'rugcheck_only' ? (
+          <div className="mb-6 bg-gradient-to-r from-amber-950/80 via-red-950/80 to-slate-900/90 border border-amber-500/50 rounded-2xl p-5 shadow-2xl animate-fadeIn">
+            <div className="flex items-start space-x-4">
+              <div className="p-3 bg-amber-500/20 text-amber-400 rounded-xl border border-amber-500/40">
+                <AlertOctagon className="w-6 h-6 animate-bounce" />
               </div>
-              <p className="text-xs text-slate-300 mt-0.5">
-                Every coin shown must strictly pass: <strong>Min $1k FDV/MC/Liq/5mVol</strong> • <strong>Max $60k MC (Early Micro-Cap)</strong> • <strong>Max +150% 5m Gain (Has Not Mega-Pumped Yet)</strong> • Mint & Freeze Revoked.
-              </p>
+              <div className="space-y-1">
+                <div className="font-extrabold text-amber-300 text-sm flex items-center space-x-2">
+                  <span>⚠️ HIGH RISK WARNING: RUGCHECK CONTRACT AUDIT ONLY MODE</span>
+                  <span className="text-[10px] font-black px-2.5 py-0.5 bg-red-500/30 text-red-300 rounded-md border border-red-500/40">
+                    MARKET FILTERS BYPASSED
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  This view displays tokens that passed the <strong>RugCheck contract safety audit ONLY</strong> (Mint/Freeze Revoked, Score &le; 100). All market filters (Market Cap, FDV, 5m Volume, Liquidity, and Early Price Gain caps) are <strong>BYPASSED</strong>. Coins shown here may have zero liquidity or zero trading volume. Trade with extreme caution!
+                </p>
+              </div>
             </div>
           </div>
+        ) : (
+          <div className="mb-6 bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-cyan-950/60 border border-emerald-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+            <div className="flex items-center space-x-3">
+              <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+                <Lock className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="font-extrabold text-white text-sm flex items-center space-x-2">
+                  <span>🛡️ ZERO BS & EARLY PRE-PUMP COIN GUARANTEE</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">STRICT ENFORCEMENT</span>
+                </div>
+                <p className="text-xs text-slate-300 mt-0.5">
+                  Every coin shown must strictly pass: <strong>Min $1k FDV/MC/Liq/5mVol</strong> • <strong>Max $60k MC (Early Micro-Cap)</strong> • <strong>Max +150% 5m Gain</strong> • Mint & Freeze Revoked.
+                </p>
+              </div>
+            </div>
 
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={toggleAutoScan}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 border transition-all cursor-pointer ${
-                autoScanEnabled
-                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
-                  : 'bg-slate-900 text-slate-400 border-slate-800'
-              }`}
-            >
-              {autoScanEnabled ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-              <span>{autoScanEnabled ? 'Auto Scan Enabled' : 'Auto Scan Disabled'}</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={toggleAutoScan}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 border transition-all cursor-pointer ${
+                  autoScanEnabled
+                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                    : 'bg-slate-900 text-slate-400 border-slate-800'
+                }`}
+              >
+                {autoScanEnabled ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+                <span>{autoScanEnabled ? 'Auto Scan Enabled' : 'Auto Scan Disabled'}</span>
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Strategy Presets & Search */}
         <div className="glass-panel p-5 rounded-2xl mb-8 space-y-4">
@@ -288,6 +310,19 @@ export default function App() {
               >
                 <TrendingUp className="w-4 h-4" />
                 <span>Top Boosted</span>
+              </button>
+
+              {/* RUGCHECK ONLY PRESET TAB */}
+              <button
+                onClick={() => handlePresetChange('rugcheck_only')}
+                className={`px-4 py-2 rounded-xl text-sm font-extrabold flex items-center space-x-2 transition-all cursor-pointer ${
+                  activePreset === 'rugcheck_only'
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/30'
+                    : 'bg-amber-950/40 text-amber-300 border border-amber-500/30 hover:bg-amber-900/50'
+                }`}
+              >
+                <AlertTriangle className="w-4 h-4" />
+                <span>⚠️ Passed RugCheck Only</span>
               </button>
 
               <button
@@ -412,15 +447,15 @@ export default function App() {
         {displayedSignals.length === 0 ? (
           <div className="glass-panel p-12 text-center rounded-2xl space-y-4">
             <Filter className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-300">Scanning for early pre-pump safe coins...</h3>
+            <h3 className="text-lg font-bold text-slate-300">Scanning for tokens...</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Auto scan is active ({autoScanEnabled ? 'ON' : 'PAUSED'}). Filtering for early coins ($1k-$60k MC, max +150% 5m gain, age &le; 30m, Mint/Freeze Revoked).
+              Auto scan is active ({autoScanEnabled ? 'ON' : 'PAUSED'}). Preset selected: <strong>{activePreset}</strong>. Click "Scan Now" to force fetch latest profile data.
             </p>
             <button
               onClick={handleScan}
               className="px-5 py-2.5 rounded-xl bg-slate-800 text-cyan-400 border border-cyan-500/30 hover:bg-slate-700 transition-all font-semibold text-sm cursor-pointer"
             >
-              Run DEX Screener Scan Now
+              Run Scan Now
             </button>
           </div>
         ) : (
@@ -432,7 +467,11 @@ export default function App() {
                 <div
                   key={token.mint}
                   className={`glass-card p-5 rounded-2xl relative flex flex-col justify-between space-y-4 border ${
-                    token.score >= 75 ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10' : 'border-slate-800'
+                    activePreset === 'rugcheck_only'
+                      ? 'border-amber-500/30 bg-slate-900/90'
+                      : token.score >= 75
+                      ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+                      : 'border-slate-800'
                   }`}
                 >
                   {/* Header info */}
@@ -468,21 +507,23 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Safety Score 1-100 Badge */}
+                      {/* Safety Score / RugCheck Badge */}
                       <div className="flex flex-col items-end">
                         <div
                           className={`px-3 py-1 rounded-xl text-xs font-black flex items-center space-x-1 border ${
-                            token.score >= 75
+                            activePreset === 'rugcheck_only'
+                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                              : token.score >= 75
                               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                              : token.score >= 55
-                              ? 'bg-amber-500/15 text-amber-400 border-amber-500/30'
-                              : 'bg-red-500/15 text-red-400 border-red-500/30'
+                              : 'bg-slate-800 text-slate-300 border-slate-700'
                           }`}
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>{token.score}/100 Score</span>
+                          <span>RugCheck: {token.rugCheckScore}/100</span>
                         </div>
-                        <span className="text-[10px] text-emerald-400 font-semibold mt-1">✓ EARLY SAFE GEM</span>
+                        <span className="text-[10px] text-amber-400 font-semibold mt-1">
+                          {activePreset === 'rugcheck_only' ? '⚠️ CONTRACT PASSED ONLY' : '✓ SAFE VERIFIED'}
+                        </span>
                       </div>
                     </div>
 
@@ -503,12 +544,12 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* DEX API 4-Metric Grid ($1,000 Mins) */}
+                  {/* DEX API 4-Metric Grid */}
                   <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
                       <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
                         <DollarSign className="w-3 h-3 text-cyan-400" />
-                        <span>FDV ($1k min)</span>
+                        <span>FDV</span>
                       </div>
                       <div className="font-extrabold text-white mt-0.5 text-sm">
                         ${token.fdvUsd.toLocaleString()}

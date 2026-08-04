@@ -1,4 +1,4 @@
-export type FilterPresetId = 'safe_haven' | 'high_momentum' | 'fresh_launches' | 'top_boosted' | 'custom';
+export type FilterPresetId = 'safe_haven' | 'high_momentum' | 'fresh_launches' | 'top_boosted' | 'rugcheck_only' | 'custom';
 
 export interface DexSocialLink {
   type?: string;
@@ -39,7 +39,7 @@ export interface DexPairData {
   quoteToken: {
     address: string;
     name: string;
-    symbol: string;
+    symbol: symbol | string;
   };
   priceNative: string;
   priceUsd: number;
@@ -145,6 +145,7 @@ export interface FilterConfig {
   maxWashScore: number;             // Max wash trading churn score (0-100)
   minOverallScoreToPass: number;    // Overall safety score required (0-100)
   onlySafeCoins: boolean;           // Zero-tolerance filter: ONLY show safe coins, no BS coins
+  heliusApiKey?: string;            // Helius RPC API Key
 }
 
 export interface Gate0Result {

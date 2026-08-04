@@ -11,8 +11,12 @@ import {
   DexSocialLink
 } from '../types';
 
+export const HELIUS_RPC_URL = 'https://mainnet.helius-rpc.com/?api-key=dfc72823-152b-468b-936e-57935ae27b08';
+
 export class FinderEngine {
-  private static filter = new RiskFilter();
+  private static filter = new RiskFilter({
+    heliusApiKey: 'dfc72823-152b-468b-936e-57935ae27b08',
+  });
   private static scannedMints = new Set<string>();
   private static tokenStore = new Map<string, MemeCoinSignal>();
   private static activePreset: FilterPresetId = 'safe_haven';
@@ -78,6 +82,18 @@ export class FinderEngine {
           onlySafeCoins: true,
         };
         break;
+      case 'rugcheck_only':
+        configPartial = {
+          minFdvUsd: 0,
+          minMarketCapUsd: 0,
+          minLiquidityUsd: 0,
+          minVolume5mUsd: 0,
+          minBuyPressurePct: 0,
+          maxWashScore: 100,
+          minOverallScoreToPass: 0,
+          onlySafeCoins: false,
+        };
+        break;
       case 'custom':
         return;
     }
@@ -107,11 +123,13 @@ export class FinderEngine {
     const all = Array.from(this.tokenStore.values());
     const config = this.filter.getConfig();
 
-    // Early Pre-Pump Filter:
-    // 1. Must pass safety rules
-    // 2. MC & FDV <= $60,000 (Early micro-cap before major pump)
-    // 3. 5m Price Gain <= +150% (Has NOT mega-pumped yet)
-    // 4. Age <= 30 minutes (Fresh early launch)
+    if (this.activePreset === 'rugcheck_only') {
+      // Show ONLY tokens that passed RugCheck contract audit (Score <= 100 & Gate 0 passed) WITHOUT market filters
+      return all
+        .filter((s) => s.passedGate0 && s.rugCheckScore <= 100)
+        .sort((a, b) => a.rugCheckScore - b.rugCheckScore || b.detectedAt - a.detectedAt);
+    }
+
     const filtered = all.filter((s) => {
       const isEarly = s.marketCapUsd <= 60000 && s.priceChange5mPct <= 150 && s.pairAgeMinutes <= 30;
       if (config.onlySafeCoins) {
@@ -131,7 +149,7 @@ export class FinderEngine {
 
   public static getStats(): FinderStats {
     const all = Array.from(this.tokenStore.values());
-    const passed = all.filter((s) => s.passedAllFilters && s.marketCapUsd <= 60000 && s.priceChange5mPct <= 150);
+    const passed = all.filter((s) => s.passedGate0 && s.rugCheckScore <= 100);
     const boosted = all.filter((s) => s.isBoosted || s.boostCount > 0);
     const avgScore = all.length > 0 ? all.reduce((acc, s) => acc + s.score, 0) / all.length : 0;
 
