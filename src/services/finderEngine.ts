@@ -1,6 +1,6 @@
 import { DexScreenerNewApiService } from './dexscreenerNewApi';
 import { RugCheckService } from './rugcheckService';
-import { PumpPortalService, PumpPortalNewTokenEvent } from './pumpPortalService';
+import { PumpPortalService } from './pumpPortalService';
 import { RiskFilter, DEFAULT_FILTER_CONFIG } from '../filters/riskFilter';
 import {
   MemeCoinSignal,
@@ -20,7 +20,6 @@ export class FinderEngine {
   private static isScanning = false;
 
   public static initialize(): void {
-    // Connect to PumpPortal WebSocket for real-time fresh launches
     PumpPortalService.connect((event) => {
       this.processNewMint(event.mint, 'pumpportal_ws', event.name, event.symbol);
     });
@@ -33,46 +32,53 @@ export class FinderEngine {
     switch (preset) {
       case 'safe_haven':
         configPartial = {
-          minMarketCapUsd: 15000,
-          minLiquidityUsd: 10000,
-          minVolume5mUsd: 3000,
+          minFdvUsd: 1000,
+          minMarketCapUsd: 1000,
+          minLiquidityUsd: 1000,
+          minVolume5mUsd: 1000,
           minBuyPressurePct: 45,
           maxWashScore: 40,
           minOverallScoreToPass: 70,
+          onlySafeCoins: true,
         };
         break;
       case 'high_momentum':
         configPartial = {
-          minMarketCapUsd: 5000,
-          minLiquidityUsd: 5000,
-          minVolume5mUsd: 10000,
+          minFdvUsd: 1000,
+          minMarketCapUsd: 1000,
+          minLiquidityUsd: 1000,
+          minVolume5mUsd: 5000,
           minBuyPressurePct: 60,
-          maxWashScore: 60,
+          maxWashScore: 50,
           minOverallScoreToPass: 60,
+          onlySafeCoins: true,
         };
         break;
       case 'fresh_launches':
         configPartial = {
+          minFdvUsd: 1000,
           minMarketCapUsd: 1000,
           minLiquidityUsd: 1000,
-          minVolume5mUsd: 500,
+          minVolume5mUsd: 1000,
           minBuyPressurePct: 35,
-          maxWashScore: 70,
+          maxWashScore: 60,
           minOverallScoreToPass: 50,
+          onlySafeCoins: true,
         };
         break;
       case 'top_boosted':
         configPartial = {
-          minMarketCapUsd: 3000,
-          minLiquidityUsd: 4000,
-          minVolume5mUsd: 2000,
+          minFdvUsd: 1000,
+          minMarketCapUsd: 1000,
+          minLiquidityUsd: 1000,
+          minVolume5mUsd: 1000,
           minBuyPressurePct: 40,
           maxWashScore: 50,
           minOverallScoreToPass: 55,
+          onlySafeCoins: true,
         };
         break;
       case 'custom':
-        // Custom leaves existing config unchanged
         return;
     }
 
@@ -99,14 +105,20 @@ export class FinderEngine {
 
   public static getSignals(): MemeCoinSignal[] {
     const all = Array.from(this.tokenStore.values());
+    const config = this.filter.getConfig();
+
+    // Strict filter: If onlySafeCoins is active, show ONLY coins that pass ALL safety filters!
+    const filtered = config.onlySafeCoins
+      ? all.filter((s) => s.passedAllFilters && s.score >= config.minOverallScoreToPass)
+      : all;
 
     if (this.activePreset === 'top_boosted') {
-      return all
+      return filtered
         .filter((s) => s.isBoosted || s.boostCount > 0)
         .sort((a, b) => b.boostCount - a.boostCount || b.score - a.score);
     }
 
-    return all.sort((a, b) => b.score - a.score || b.marketCapUsd - a.marketCapUsd);
+    return filtered.sort((a, b) => b.score - a.score || b.marketCapUsd - a.marketCapUsd);
   }
 
   public static getStats(): FinderStats {
@@ -120,7 +132,7 @@ export class FinderEngine {
       passedFilters: passed.length,
       boostedCount: boosted.length,
       avgScore: Math.round(avgScore),
-      solPriceUsd: 165, // Standard benchmark SOL price
+      solPriceUsd: 165,
     };
   }
 
@@ -129,7 +141,6 @@ export class FinderEngine {
     this.isScanning = true;
 
     try {
-      // 1. Fetch latest token profiles from NEW DexScreener API
       const profiles = await DexScreenerNewApiService.fetchLatestTokenProfiles();
       for (const p of profiles) {
         if (p.tokenAddress) {
@@ -137,7 +148,6 @@ export class FinderEngine {
         }
       }
 
-      // 2. Fetch top boosted tokens from NEW DexScreener API
       const boosted = await DexScreenerNewApiService.fetchTopBoostedTokens();
       for (const b of boosted) {
         if (b.tokenAddress) {
@@ -220,11 +230,12 @@ export class FinderEngine {
     const volume5mUsd = pair?.volume?.m5 ?? 0;
     const liquidityUsd = pair?.liquidity?.usd ?? 0;
     const turnover5m = liquidityUsd > 0 ? Number((volume5mUsd / liquidityUsd).toFixed(2)) : 0;
+    const marketCapUsd = pair?.marketCap ?? pair?.fdv ?? 0;
+    const fdvUsd = pair?.fdv ?? marketCapUsd;
 
     const createdAt = pair?.pairCreatedAt ? pair.pairCreatedAt : Date.now();
     const pairAgeMinutes = Math.max(0, Math.round((Date.now() - createdAt) / 60000));
 
-    // Combine social links
     const socials: DexSocialLink[] = [...(extraSocials || [])];
     if (pair?.info?.websites) {
       for (const w of pair.info.websites) {
@@ -251,7 +262,8 @@ export class FinderEngine {
       headerUrl,
       description,
       priceUsd: pair?.priceUsd ?? 0,
-      marketCapUsd: pair?.marketCap ?? pair?.fdv ?? 0,
+      fdvUsd,
+      marketCapUsd,
       liquidityUsd,
       volume5mUsd,
       priceChange5mPct: pair?.priceChange?.m5 ?? 0,

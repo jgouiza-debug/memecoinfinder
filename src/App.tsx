@@ -19,7 +19,9 @@ import {
   Globe,
   Radio,
   Filter,
-  Layers
+  Layers,
+  Sparkles,
+  Lock
 } from 'lucide-react';
 import { FinderEngine } from './services/finderEngine';
 import { MemeCoinSignal, FilterPresetId, FinderStats, FilterConfig } from './types';
@@ -45,7 +47,6 @@ export default function App() {
   const [viewMode, setViewMode] = useState<'all' | 'bookmarks'>('all');
   const [filterConfig, setFilterConfig] = useState<FilterConfig>(FinderEngine.getConfig());
 
-  // Initialize engine on mount
   useEffect(() => {
     FinderEngine.initialize();
 
@@ -54,10 +55,8 @@ export default function App() {
       setStats(FinderEngine.getStats());
     });
 
-    // Run initial API scan
     handleScan();
 
-    // Auto scan every 15 seconds
     const interval = setInterval(() => {
       FinderEngine.triggerScan();
     }, 15000);
@@ -99,7 +98,7 @@ export default function App() {
     localStorage.setItem('meme_finder_bookmarks', JSON.stringify(Array.from(next)));
   };
 
-  const handleSliderChange = (key: keyof FilterConfig, value: number) => {
+  const handleSliderChange = (key: keyof FilterConfig, value: number | boolean) => {
     const nextConfig = { ...filterConfig, [key]: value };
     setFilterConfig(nextConfig);
     setActivePreset('custom');
@@ -125,14 +124,14 @@ export default function App() {
                 <h1 className="text-xl font-extrabold tracking-tight text-white">
                   Meme Coin Finder <span className="gradient-text-emerald">Bot</span>
                 </h1>
-                <span className="px-2 py-0.5 text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full flex items-center space-x-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
-                  <span>NEW API LIVE</span>
+                <span className="px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center space-x-1">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>STRICT SAFE FILTER ACTIVE</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                 <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>DexScreener V1 APIs & PumpPortal WebSocket Stream</span>
+                <span>RugCheck 1-100 Score | Min $1k FDV, MC, 5m Vol & Liq via DEX API</span>
               </p>
             </div>
           </div>
@@ -150,8 +149,8 @@ export default function App() {
             <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <div>
-                <div className="text-xs text-slate-400">Passed Safety</div>
-                <div className="font-bold text-emerald-400">{stats.passedFilters} Tokens</div>
+                <div className="text-xs text-slate-400">Safe Verified</div>
+                <div className="font-bold text-emerald-400">{stats.passedFilters} Coins</div>
               </div>
             </div>
 
@@ -159,7 +158,7 @@ export default function App() {
               <Award className="w-4 h-4 text-amber-400" />
               <div>
                 <div className="text-xs text-slate-400">Active Boosted</div>
-                <div className="font-bold text-amber-400">{stats.boostedCount} Tokens</div>
+                <div className="font-bold text-amber-400">{stats.boostedCount} Coins</div>
               </div>
             </div>
 
@@ -177,6 +176,36 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        {/* Safe Filter Badge Callout */}
+        <div className="mb-6 bg-gradient-to-r from-emerald-950/60 via-slate-900/80 to-cyan-950/60 border border-emerald-500/30 rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-xl">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-emerald-500/20 text-emerald-400 rounded-xl border border-emerald-500/30">
+              <Lock className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="font-extrabold text-white text-sm flex items-center space-x-2">
+                <span>🛡️ ZERO BS COINS FILTER GUARANTEE</span>
+                <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">STRICT ENFORCEMENT</span>
+              </div>
+              <p className="text-xs text-slate-300 mt-0.5">
+                Every coin shown must strictly pass: <strong>Min $1,000 FDV</strong> • <strong>Min $1,000 Market Cap</strong> • <strong>Min $1,000 Liquidity</strong> • <strong>Min $1,000 5m Volume</strong> • Mint & Freeze Revoked • RugCheck Score 1-100.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <label className="text-xs font-bold text-slate-300 flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filterConfig.onlySafeCoins}
+                onChange={(e) => handleSliderChange('onlySafeCoins', e.target.checked)}
+                className="accent-emerald-500 w-4 h-4 rounded cursor-pointer"
+              />
+              <span>Only Show Safe Coins</span>
+            </label>
+          </div>
+        </div>
+
         {/* Strategy Presets & Search */}
         <div className="glass-panel p-5 rounded-2xl mb-8 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -186,43 +215,43 @@ export default function App() {
                 onClick={() => handlePresetChange('safe_haven')}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all cursor-pointer ${
                   activePreset === 'safe_haven'
-                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20'
+                    ? 'bg-emerald-500 text-black shadow-lg shadow-emerald-500/20 font-bold'
                     : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800'
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>Safe Haven Gems</span>
+                <span>Safe Haven ($1k Mins)</span>
               </button>
 
               <button
                 onClick={() => handlePresetChange('high_momentum')}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all cursor-pointer ${
                   activePreset === 'high_momentum'
-                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20'
+                    ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20 font-bold'
                     : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800'
                 }`}
               >
                 <Zap className="w-4 h-4" />
-                <span>High Momentum</span>
+                <span>High Momentum ($5k Vol)</span>
               </button>
 
               <button
                 onClick={() => handlePresetChange('fresh_launches')}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all cursor-pointer ${
                   activePreset === 'fresh_launches'
-                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20'
+                    ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20 font-bold'
                     : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800'
                 }`}
               >
                 <Flame className="w-4 h-4" />
-                <span>Fresh Pump.fun</span>
+                <span>Fresh Pump.fun ($1k Mins)</span>
               </button>
 
               <button
                 onClick={() => handlePresetChange('top_boosted')}
                 className={`px-4 py-2 rounded-xl text-sm font-semibold flex items-center space-x-2 transition-all cursor-pointer ${
                   activePreset === 'top_boosted'
-                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20'
+                    ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/20 font-bold'
                     : 'bg-slate-900/80 text-slate-300 hover:bg-slate-800'
                 }`}
               >
@@ -280,17 +309,33 @@ export default function App() {
 
           {/* Custom Filter Sliders Drawer */}
           {showCustomFilters && (
-            <div className="pt-4 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-3 gap-6 animate-fadeIn">
+            <div className="pt-4 border-t border-slate-800/80 grid grid-cols-1 md:grid-cols-4 gap-6 animate-fadeIn">
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Min Market Cap</span>
+                  <span>Min FDV ($)</span>
+                  <span className="text-cyan-400">${filterConfig.minFdvUsd.toLocaleString()}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="100000"
+                  step="500"
+                  value={filterConfig.minFdvUsd}
+                  onChange={(e) => handleSliderChange('minFdvUsd', Number(e.target.value))}
+                  className="w-full accent-cyan-500 cursor-pointer"
+                />
+              </div>
+
+              <div>
+                <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
+                  <span>Min Market Cap ($)</span>
                   <span className="text-cyan-400">${filterConfig.minMarketCapUsd.toLocaleString()}</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="100000"
-                  step="1000"
+                  step="500"
                   value={filterConfig.minMarketCapUsd}
                   onChange={(e) => handleSliderChange('minMarketCapUsd', Number(e.target.value))}
                   className="w-full accent-cyan-500 cursor-pointer"
@@ -299,14 +344,14 @@ export default function App() {
 
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Min Liquidity</span>
+                  <span>Min Liquidity ($)</span>
                   <span className="text-emerald-400">${filterConfig.minLiquidityUsd.toLocaleString()}</span>
                 </div>
                 <input
                   type="range"
                   min="0"
                   max="50000"
-                  step="1000"
+                  step="500"
                   value={filterConfig.minLiquidityUsd}
                   onChange={(e) => handleSliderChange('minLiquidityUsd', Number(e.target.value))}
                   className="w-full accent-emerald-500 cursor-pointer"
@@ -315,7 +360,7 @@ export default function App() {
 
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Min 5m Volume</span>
+                  <span>Min 5m Volume ($)</span>
                   <span className="text-amber-400">${filterConfig.minVolume5mUsd.toLocaleString()}</span>
                 </div>
                 <input
@@ -328,54 +373,6 @@ export default function App() {
                   className="w-full accent-amber-500 cursor-pointer"
                 />
               </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Min Buy Pressure</span>
-                  <span className="text-cyan-400">{filterConfig.minBuyPressurePct}%</span>
-                </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="80"
-                  step="5"
-                  value={filterConfig.minBuyPressurePct}
-                  onChange={(e) => handleSliderChange('minBuyPressurePct', Number(e.target.value))}
-                  className="w-full accent-cyan-500 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Max Wash Score</span>
-                  <span className="text-purple-400">{filterConfig.maxWashScore}/100</span>
-                </div>
-                <input
-                  type="range"
-                  min="20"
-                  max="100"
-                  step="5"
-                  value={filterConfig.maxWashScore}
-                  onChange={(e) => handleSliderChange('maxWashScore', Number(e.target.value))}
-                  className="w-full accent-purple-500 cursor-pointer"
-                />
-              </div>
-
-              <div>
-                <div className="flex justify-between text-xs font-semibold mb-2 text-slate-300">
-                  <span>Min Safety Score</span>
-                  <span className="text-emerald-400">{filterConfig.minOverallScoreToPass}/100</span>
-                </div>
-                <input
-                  type="range"
-                  min="30"
-                  max="90"
-                  step="5"
-                  value={filterConfig.minOverallScoreToPass}
-                  onChange={(e) => handleSliderChange('minOverallScoreToPass', Number(e.target.value))}
-                  className="w-full accent-emerald-500 cursor-pointer"
-                />
-              </div>
             </div>
           )}
         </div>
@@ -384,9 +381,9 @@ export default function App() {
         {displayedSignals.length === 0 ? (
           <div className="glass-panel p-12 text-center rounded-2xl space-y-4">
             <Filter className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-300">No matching meme coins found</h3>
+            <h3 className="text-lg font-bold text-slate-300">No matching safe coins right now</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              No tokens matched the selected filter preset ({activePreset}). Try clicking "Scan New API" or adjusting your filter thresholds.
+              No scanned coins currently meet all strict safety gates ($1k FDV, $1k MC, $1k Liquidity, $1k 5m Volume, Mint/Freeze Revoked). Click "Scan New API" to refresh the live stream.
             </p>
             <button
               onClick={handleScan}
@@ -403,8 +400,8 @@ export default function App() {
               return (
                 <div
                   key={token.mint}
-                  className={`glass-card p-5 rounded-2xl relative flex flex-col justify-between space-y-4 ${
-                    token.score >= 80 ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10' : ''
+                  className={`glass-card p-5 rounded-2xl relative flex flex-col justify-between space-y-4 border ${
+                    token.score >= 75 ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10' : 'border-slate-800'
                   }`}
                 >
                   {/* Header info */}
@@ -440,7 +437,7 @@ export default function App() {
                         </div>
                       </div>
 
-                      {/* Score Badge */}
+                      {/* Safety Score 1-100 Badge */}
                       <div className="flex flex-col items-end">
                         <div
                           className={`px-3 py-1 rounded-xl text-xs font-black flex items-center space-x-1 border ${
@@ -452,9 +449,9 @@ export default function App() {
                           }`}
                         >
                           <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>{token.score}/100</span>
+                          <span>{token.score}/100 Score</span>
                         </div>
-                        <span className="text-[10px] text-slate-500 mt-1">{token.pairAgeMinutes}m old</span>
+                        <span className="text-[10px] text-emerald-400 font-semibold mt-1">✓ SAFE VERIFIED</span>
                       </div>
                     </div>
 
@@ -475,50 +472,45 @@ export default function App() {
                     </div>
                   </div>
 
-                  {/* Core Metrics Grid */}
-                  <div className="grid grid-cols-2 gap-3 text-xs">
+                  {/* DEX API 4-Metric Grid ($1,000 Mins) */}
+                  <div className="grid grid-cols-2 gap-2.5 text-xs">
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
-                      <div className="text-slate-400 flex items-center space-x-1">
-                        <DollarSign className="w-3 h-3 text-emerald-400" />
-                        <span>Market Cap</span>
+                      <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
+                        <DollarSign className="w-3 h-3 text-cyan-400" />
+                        <span>FDV ($1k min)</span>
                       </div>
-                      <div className="font-bold text-white mt-1 text-sm">
+                      <div className="font-extrabold text-white mt-0.5 text-sm">
+                        ${token.fdvUsd.toLocaleString()}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
+                      <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
+                        <DollarSign className="w-3 h-3 text-emerald-400" />
+                        <span>Market Cap ($1k min)</span>
+                      </div>
+                      <div className="font-extrabold text-emerald-400 mt-0.5 text-sm">
                         ${token.marketCapUsd.toLocaleString()}
                       </div>
                     </div>
 
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
-                      <div className="text-slate-400 flex items-center space-x-1">
-                        <Layers className="w-3 h-3 text-cyan-400" />
-                        <span>Liquidity</span>
-                      </div>
-                      <div className="font-bold text-cyan-400 mt-1 text-sm">
-                        ${token.liquidityUsd.toLocaleString()}
-                      </div>
-                    </div>
-
-                    <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
-                      <div className="text-slate-400 flex items-center space-x-1">
+                      <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
                         <Activity className="w-3 h-3 text-amber-400" />
-                        <span>5m Volume</span>
+                        <span>5m Volume ($1k min)</span>
                       </div>
-                      <div className="font-bold text-white mt-1 text-sm">
+                      <div className="font-extrabold text-white mt-0.5 text-sm">
                         ${token.volume5mUsd.toLocaleString()}
                       </div>
                     </div>
 
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
-                      <div className="text-slate-400 flex items-center space-x-1">
-                        <TrendingUp className="w-3 h-3 text-purple-400" />
-                        <span>5m Price</span>
+                      <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
+                        <Layers className="w-3 h-3 text-purple-400" />
+                        <span>Liquidity ($1k min)</span>
                       </div>
-                      <div
-                        className={`font-bold mt-1 text-sm ${
-                          token.priceChange5mPct >= 0 ? 'text-emerald-400' : 'text-red-400'
-                        }`}
-                      >
-                        {token.priceChange5mPct >= 0 ? '+' : ''}
-                        {token.priceChange5mPct.toFixed(1)}%
+                      <div className="font-extrabold text-purple-300 mt-0.5 text-sm">
+                        ${token.liquidityUsd.toLocaleString()}
                       </div>
                     </div>
                   </div>

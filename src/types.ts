@@ -130,9 +130,10 @@ export interface FilterConfig {
   requireMintRevoked: boolean;      // Require mint authority to be null
   requireFreezeRevoked: boolean;    // Require freeze authority to be null
   minLpLockedPct: number;           // Min % of LP locked/burned
-  minMarketCapUsd: number;          // Min market cap ($)
-  minLiquidityUsd: number;          // Min liquidity ($)
-  minVolume5mUsd: number;           // Min 5m volume ($)
+  minFdvUsd: number;                // Min FDV ($1,000)
+  minMarketCapUsd: number;          // Min market cap ($1,000)
+  minLiquidityUsd: number;          // Min liquidity ($1,000)
+  minVolume5mUsd: number;           // Min 5m volume ($1,000)
   maxBundledSupplyPct: number;      // Max % supply bundled at creation
   maxInsiderPct: number;            // Max insider holding %
   maxSniperHoldingsPct: number;     // Max sniper holding %
@@ -143,6 +144,7 @@ export interface FilterConfig {
   maxNegativePriceChange5mPct: number; // Max allowed drawdown % over 5m (e.g. -35%)
   maxWashScore: number;             // Max wash trading churn score (0-100)
   minOverallScoreToPass: number;    // Overall safety score required (0-100)
+  onlySafeCoins: boolean;           // Zero-tolerance filter: ONLY show safe coins, no BS coins
 }
 
 export interface Gate0Result {
@@ -182,6 +184,7 @@ export interface MemeCoinSignal {
   headerUrl?: string;
   description?: string;
   priceUsd: number;
+  fdvUsd: number;
   marketCapUsd: number;
   liquidityUsd: number;
   volume5mUsd: number;
@@ -194,7 +197,7 @@ export interface MemeCoinSignal {
   pairAgeMinutes: number;
   isBoosted: boolean;
   boostCount: number;
-  score: number;                   // Unified 0-100 safety score
+  score: number;                   // Unified 1-100 safety score
   washScore: number;               // 0-100 wash trading churn
   rugCheckScore: number;           // Raw RugCheck score
   passedGate0: boolean;
