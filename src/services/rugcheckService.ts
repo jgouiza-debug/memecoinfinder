@@ -13,7 +13,7 @@ const POOL_OWNERS = new Set<string>([
 
 export class RugCheckService {
   private static cache = new Map<string, { report: RugCheckReport; timestamp: number }>();
-  private static TTL_MS = 10000;
+  private static TTL_MS = 4000; // Fast TTL for real-time audit polling
 
   public static async getReport(mint: string): Promise<RugCheckReport> {
     const cached = this.cache.get(mint);
@@ -37,6 +37,25 @@ export class RugCheckService {
       const inferred = this.buildInferredReport(mint);
       return inferred;
     }
+  }
+
+  /**
+   * Verifies if a token has ACTUALLY passed RugCheck API audit:
+   * 1. Must be indexed by RugCheck (!isInferred)
+   * 2. Mint authority MUST be null (revoked)
+   * 3. Freeze authority MUST be null (revoked)
+   * 4. Score MUST be <= 500 (Good / Low risk on RugCheck)
+   */
+  public static isVerifiedSafe(report: RugCheckReport): boolean {
+    if (report.isInferred) return false;
+    const mintRevoked = report.token?.mintAuthority === null;
+    const freezeRevoked = report.token?.freezeAuthority === null;
+    const lowRiskScore = (report.score ?? 9999) <= 500;
+
+    // Check risks array for severe danger flags
+    const hasDangerRisk = Array.isArray(report.risks) && report.risks.some((r) => r.level === 'danger');
+
+    return mintRevoked && freezeRevoked && lowRiskScore && !hasDangerRisk;
   }
 
   private static normalizeReport(report: RugCheckReport, mint: string): RugCheckReport {
@@ -71,11 +90,11 @@ export class RugCheckService {
   private static buildInferredReport(mint: string): RugCheckReport {
     return {
       mint,
-      score: 0,
+      score: 9999,
       isInferred: true,
       token: {
-        mintAuthority: null,
-        freezeAuthority: null,
+        mintAuthority: 'ACTIVE_UNVERIFIED',
+        freezeAuthority: 'ACTIVE_UNVERIFIED',
         supply: 1000000000,
         decimals: 6,
       },

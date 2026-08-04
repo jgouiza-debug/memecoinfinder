@@ -124,10 +124,10 @@ export class FinderEngine {
     const config = this.filter.getConfig();
 
     if (this.activePreset === 'rugcheck_only') {
-      // Show ALL tokens that passed RugCheck contract safety audit (Gate 0 passed, score 100/100 or RugCheck raw score <= 1000)
+      // Show ONLY tokens that have ACTUALLY passed RugCheck audit (Gate 0 passed & RugCheck score <= 500)
       return all
-        .filter((s) => s.passedGate0 || s.rugCheckScore <= 1000 || s.score >= 50)
-        .sort((a, b) => b.score - a.score || a.rugCheckScore - b.rugCheckScore || b.detectedAt - a.detectedAt);
+        .filter((s) => s.passedGate0 && s.rugCheckScore <= 500)
+        .sort((a, b) => a.rugCheckScore - b.rugCheckScore || b.score - a.score || b.detectedAt - a.detectedAt);
     }
 
     const filtered = all.filter((s) => {
@@ -149,7 +149,7 @@ export class FinderEngine {
 
   public static getStats(): FinderStats {
     const all = Array.from(this.tokenStore.values());
-    const passed = all.filter((s) => s.passedGate0 || s.rugCheckScore <= 1000 || s.score >= 50);
+    const passed = all.filter((s) => s.passedGate0 && s.rugCheckScore <= 500);
     const boosted = all.filter((s) => s.isBoosted || s.boostCount > 0);
     const avgScore = all.length > 0 ? all.reduce((acc, s) => acc + s.score, 0) / all.length : 0;
 

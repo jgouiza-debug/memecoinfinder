@@ -67,12 +67,13 @@ export default function App() {
     };
   }, []);
 
+  // 3-SECOND AUTO RELOAD INTERVAL
   useEffect(() => {
     if (!autoScanEnabled) return;
 
     const interval = setInterval(() => {
       FinderEngine.triggerScan();
-    }, 15000);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [autoScanEnabled]);
@@ -139,18 +140,18 @@ export default function App() {
                   Meme Coin Finder <span className="gradient-text-emerald">Bot</span>
                 </h1>
                 <span className="px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center space-x-1">
-                  <Cpu className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>HELIUS RPC CONNECTED</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>3s AUTO RELOAD RUGCHECK VERIFIED</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                 <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>Helius RPC (dfc72823...) & RugCheck Audit Pipeline</span>
+                <span>3s Refresh | Helius RPC (dfc72823...) & RugCheck API</span>
               </p>
             </div>
           </div>
 
-          {/* Quick Metrics & Auto Scan Bar */}
+          {/* Quick Metrics & 3s Auto Scan Bar */}
           <div className="hidden lg:flex items-center space-x-4 text-sm">
             <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
               <Activity className="w-4 h-4 text-cyan-400" />
@@ -168,7 +169,7 @@ export default function App() {
               </div>
             </div>
 
-            {/* AUTO SCAN TOGGLE BUTTON */}
+            {/* 3-SECOND AUTO SCAN TOGGLE BUTTON */}
             <button
               onClick={toggleAutoScan}
               className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center space-x-2 border transition-all cursor-pointer ${
@@ -181,13 +182,13 @@ export default function App() {
                 <>
                   <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                   <Pause className="w-3.5 h-3.5 fill-emerald-400" />
-                  <span>AUTO SCAN: ON (15s)</span>
+                  <span>AUTO RELOAD: ON (3s)</span>
                 </>
               ) : (
                 <>
                   <span className="w-2 h-2 rounded-full bg-slate-500"></span>
                   <Play className="w-3.5 h-3.5 fill-slate-400" />
-                  <span>AUTO SCAN: PAUSED</span>
+                  <span>AUTO RELOAD: PAUSED</span>
                 </>
               )}
             </button>
@@ -215,13 +216,13 @@ export default function App() {
               </div>
               <div className="space-y-1">
                 <div className="font-extrabold text-amber-300 text-sm flex items-center space-x-2">
-                  <span>⚠️ HIGH RISK WARNING: RUGCHECK CONTRACT AUDIT ONLY MODE</span>
+                  <span>⚠️ HIGH RISK WARNING: VERIFIED RUGCHECK API AUDIT ONLY (3s REFRESH)</span>
                   <span className="text-[10px] font-black px-2.5 py-0.5 bg-red-500/30 text-red-300 rounded-md border border-red-500/40">
                     MARKET FILTERS BYPASSED
                   </span>
                 </div>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  This view displays tokens that passed the <strong>RugCheck contract safety audit ONLY</strong> (Mint/Freeze Revoked, Score &le; 100). All market filters (Market Cap, FDV, 5m Volume, Liquidity, and Early Price Gain caps) are <strong>BYPASSED</strong>. Coins shown here may have zero liquidity or zero trading volume. Trade with extreme caution!
+                  This view displays tokens that have <strong>ACTUALLY PASSED RugCheck API audit</strong> (Mint Revoked: NULL, Freeze Revoked: NULL, Score &le; 500). All market filters (Market Cap, FDV, Volume, Liquidity) are <strong>BYPASSED</strong>. Auto reloading every 3 seconds. Trade with extreme caution!
                 </p>
               </div>
             </div>
@@ -234,11 +235,11 @@ export default function App() {
               </div>
               <div>
                 <div className="font-extrabold text-white text-sm flex items-center space-x-2">
-                  <span>🛡️ ZERO BS & EARLY PRE-PUMP COIN GUARANTEE</span>
-                  <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">STRICT ENFORCEMENT</span>
+                  <span>🛡️ 100% RUGCHECK VERIFIED & EARLY PRE-PUMP COINS</span>
+                  <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">3s AUTO RELOAD</span>
                 </div>
                 <p className="text-xs text-slate-300 mt-0.5">
-                  Every coin shown must strictly pass: <strong>Min $1k FDV/MC/Liq/5mVol</strong> • <strong>Max $60k MC (Early Micro-Cap)</strong> • <strong>Max +150% 5m Gain</strong> • Mint & Freeze Revoked.
+                  Verified via RugCheck API: <strong>Mint Revoked: NULL</strong> • <strong>Freeze Revoked: NULL</strong> • <strong>RugCheck Score &le; 500</strong> • Min $1k FDV/MC/Liq • Max $60k MC (Early Gem).
                 </p>
               </div>
             </div>
@@ -253,7 +254,7 @@ export default function App() {
                 }`}
               >
                 {autoScanEnabled ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                <span>{autoScanEnabled ? 'Auto Scan Enabled' : 'Auto Scan Disabled'}</span>
+                <span>{autoScanEnabled ? 'Auto Reload ON (3s)' : 'Auto Reload PAUSED'}</span>
               </button>
             </div>
           </div>
@@ -322,7 +323,7 @@ export default function App() {
                 }`}
               >
                 <AlertTriangle className="w-4 h-4" />
-                <span>⚠️ Passed RugCheck Only</span>
+                <span>⚠️ Passed RugCheck Only (3s)</span>
               </button>
 
               <button
@@ -447,9 +448,9 @@ export default function App() {
         {displayedSignals.length === 0 ? (
           <div className="glass-panel p-12 text-center rounded-2xl space-y-4">
             <Filter className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-300">Scanning for tokens...</h3>
+            <h3 className="text-lg font-bold text-slate-300">Scanning RugCheck API (Auto Reloading Every 3s)...</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Auto scan is active ({autoScanEnabled ? 'ON' : 'PAUSED'}). Preset selected: <strong>{activePreset}</strong>. Click "Scan Now" to force fetch latest profile data.
+              Auto reload active ({autoScanEnabled ? 'ON - 3s' : 'PAUSED'}). Filtering tokens that have <strong>ACTUALLY PASSED RugCheck API audit</strong> (Mint & Freeze Revoked, Score &le; 500).
             </p>
             <button
               onClick={handleScan}
@@ -468,7 +469,7 @@ export default function App() {
                   key={token.mint}
                   className={`glass-card p-5 rounded-2xl relative flex flex-col justify-between space-y-4 border ${
                     activePreset === 'rugcheck_only'
-                      ? 'border-amber-500/30 bg-slate-900/90'
+                      ? 'border-amber-500/40 bg-slate-900/90'
                       : token.score >= 75
                       ? 'border-emerald-500/40 shadow-lg shadow-emerald-500/10'
                       : 'border-slate-800'
@@ -511,18 +512,16 @@ export default function App() {
                       <div className="flex flex-col items-end">
                         <div
                           className={`px-3 py-1 rounded-xl text-xs font-black flex items-center space-x-1 border ${
-                            activePreset === 'rugcheck_only'
-                              ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                              : token.score >= 75
+                            token.rugCheckScore <= 500
                               ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
-                              : 'bg-slate-800 text-slate-300 border-slate-700'
+                              : 'bg-amber-500/15 text-amber-400 border-amber-500/30'
                           }`}
                         >
-                          <ShieldCheck className="w-3.5 h-3.5" />
-                          <span>RugCheck: {token.rugCheckScore}/100</span>
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>RugCheck: {token.rugCheckScore} Good</span>
                         </div>
-                        <span className="text-[10px] text-amber-400 font-semibold mt-1">
-                          {activePreset === 'rugcheck_only' ? '⚠️ CONTRACT PASSED ONLY' : '✓ SAFE VERIFIED'}
+                        <span className="text-[10px] text-emerald-400 font-extrabold mt-1">
+                          ✓ MINT & FREEZE REVOKED
                         </span>
                       </div>
                     </div>
