@@ -15,18 +15,18 @@ export const DEFAULT_FILTER_CONFIG: FilterConfig = {
   minLpLockedPct: 0,
   minFdvUsd: 1000,
   minMarketCapUsd: 1000,
-  minLiquidityUsd: 1000,
-  minVolume5mUsd: 1000,
+  minLiquidityUsd: 1500,
+  minVolume5mUsd: 1500,
   maxBundledSupplyPct: 35,
   maxInsiderPct: 20,
   maxSniperHoldingsPct: 30,
   maxTop10Pct: 35,
   maxSingleHolderPct: 15,
   maxDevHoldingsPct: 10,
-  minBuyPressurePct: 40,
+  minBuyPressurePct: 48,
   maxNegativePriceChange5mPct: -35,
-  maxWashScore: 70,
-  minOverallScoreToPass: 60,
+  maxWashScore: 50,
+  minOverallScoreToPass: 75,
   onlySafeCoins: true,
 };
 
@@ -73,7 +73,7 @@ export class RiskFilter {
   }
 
   /**
-   * Hard disqualifying safety gate.
+   * Hard safety gate.
    */
   public evaluateGate0(rugCheck: RugCheckReport): Gate0Result {
     const reasons: string[] = [];
@@ -145,14 +145,13 @@ export class RiskFilter {
       reason: contractScore >= 24 ? "Mint & Freeze revoked (Clean)" : "Authority vulnerability detected",
     });
 
-    // 2. DEX Market Metrics: FDV, MC, 5m Volume, Liquidity ($1,000 minimums) (35 pts)
+    // 2. DEX Market Metrics: FDV, MC, 5m Volume, Liquidity (35 pts)
     let dexMarketScore = 0;
     const marketCap = pair?.marketCap ?? pair?.fdv ?? 0;
     const fdv = pair?.fdv ?? marketCap;
     const liquidity = pair?.liquidity?.usd ?? 0;
     const volume5m = pair?.volume?.m5 ?? 0;
 
-    // Hard disqualifications if below $1,000 threshold
     if (fdv >= this.config.minFdvUsd) {
       dexMarketScore += 8;
     } else {
