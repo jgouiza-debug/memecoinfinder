@@ -21,7 +21,9 @@ import {
   Filter,
   Layers,
   Sparkles,
-  Lock
+  Lock,
+  Play,
+  Pause
 } from 'lucide-react';
 import { FinderEngine } from './services/finderEngine';
 import { MemeCoinSignal, FilterPresetId, FinderStats, FilterConfig } from './types';
@@ -38,6 +40,7 @@ export default function App() {
   const [activePreset, setActivePreset] = useState<FilterPresetId>('safe_haven');
   const [showCustomFilters, setShowCustomFilters] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [autoScanEnabled, setAutoScanEnabled] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [bookmarkedMints, setBookmarkedMints] = useState<Set<string>>(() => {
@@ -57,15 +60,21 @@ export default function App() {
 
     handleScan();
 
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  // Handle Auto-Scan Interval Loop
+  useEffect(() => {
+    if (!autoScanEnabled) return;
+
     const interval = setInterval(() => {
       FinderEngine.triggerScan();
     }, 15000);
 
-    return () => {
-      unsubscribe();
-      clearInterval(interval);
-    };
-  }, []);
+    return () => clearInterval(interval);
+  }, [autoScanEnabled]);
 
   const handlePresetChange = (preset: FilterPresetId) => {
     setActivePreset(preset);
@@ -77,6 +86,10 @@ export default function App() {
     setIsScanning(true);
     await FinderEngine.triggerScan();
     setIsScanning(false);
+  };
+
+  const toggleAutoScan = () => {
+    setAutoScanEnabled(!autoScanEnabled);
   };
 
   const handleSearchSubmit = async (e: React.FormEvent) => {
@@ -126,18 +139,18 @@ export default function App() {
                 </h1>
                 <span className="px-2.5 py-0.5 text-xs font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 rounded-full flex items-center space-x-1">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>STRICT SAFE FILTER ACTIVE</span>
+                  <span>EARLY PRE-PUMP FILTER</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 flex items-center space-x-2 mt-0.5">
                 <Radio className="w-3 h-3 text-cyan-400 animate-pulse" />
-                <span>RugCheck 1-100 Score | Min $1k FDV, MC, 5m Vol & Liq via DEX API</span>
+                <span>Auto Scan Loop | Max $60k MC/FDV | Max +150% 5m Gain</span>
               </p>
             </div>
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="hidden lg:flex items-center space-x-6 text-sm">
+          {/* Quick Metrics & Auto Scan Bar */}
+          <div className="hidden lg:flex items-center space-x-4 text-sm">
             <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
               <Activity className="w-4 h-4 text-cyan-400" />
               <div>
@@ -149,18 +162,34 @@ export default function App() {
             <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <div>
-                <div className="text-xs text-slate-400">Safe Verified</div>
+                <div className="text-xs text-slate-400">Early Safe Gems</div>
                 <div className="font-bold text-emerald-400">{stats.passedFilters} Coins</div>
               </div>
             </div>
 
-            <div className="glass-panel px-4 py-2 rounded-xl flex items-center space-x-3">
-              <Award className="w-4 h-4 text-amber-400" />
-              <div>
-                <div className="text-xs text-slate-400">Active Boosted</div>
-                <div className="font-bold text-amber-400">{stats.boostedCount} Coins</div>
-              </div>
-            </div>
+            {/* AUTO SCAN TOGGLE BUTTON */}
+            <button
+              onClick={toggleAutoScan}
+              className={`px-4 py-2.5 rounded-xl font-extrabold text-xs flex items-center space-x-2 border transition-all cursor-pointer ${
+                autoScanEnabled
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40 shadow-lg shadow-emerald-500/10'
+                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700'
+              }`}
+            >
+              {autoScanEnabled ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                  <Pause className="w-3.5 h-3.5 fill-emerald-400" />
+                  <span>AUTO SCAN: ON (15s)</span>
+                </>
+              ) : (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-slate-500"></span>
+                  <Play className="w-3.5 h-3.5 fill-slate-400" />
+                  <span>AUTO SCAN: PAUSED</span>
+                </>
+              )}
+            </button>
 
             <button
               onClick={handleScan}
@@ -168,7 +197,7 @@ export default function App() {
               className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-black font-bold hover:from-emerald-400 hover:to-cyan-400 transition-all flex items-center space-x-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 cursor-pointer"
             >
               <RefreshCw className={`w-4 h-4 ${isScanning ? 'animate-spin' : ''}`} />
-              <span>{isScanning ? 'Scanning...' : 'Scan New API'}</span>
+              <span>{isScanning ? 'Scanning...' : 'Scan Now'}</span>
             </button>
           </div>
         </div>
@@ -184,25 +213,27 @@ export default function App() {
             </div>
             <div>
               <div className="font-extrabold text-white text-sm flex items-center space-x-2">
-                <span>🛡️ ZERO BS COINS FILTER GUARANTEE</span>
+                <span>🛡️ ZERO BS & EARLY PRE-PUMP COIN GUARANTEE</span>
                 <span className="text-xs font-semibold px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded-md">STRICT ENFORCEMENT</span>
               </div>
               <p className="text-xs text-slate-300 mt-0.5">
-                Every coin shown must strictly pass: <strong>Min $1,000 FDV</strong> • <strong>Min $1,000 Market Cap</strong> • <strong>Min $1,000 Liquidity</strong> • <strong>Min $1,000 5m Volume</strong> • Mint & Freeze Revoked • RugCheck Score 1-100.
+                Every coin shown must strictly pass: <strong>Min $1k FDV/MC/Liq/5mVol</strong> • <strong>Max $60k MC (Early Micro-Cap)</strong> • <strong>Max +150% 5m Gain (Has Not Mega-Pumped Yet)</strong> • Mint & Freeze Revoked.
               </p>
             </div>
           </div>
 
           <div className="flex items-center space-x-2">
-            <label className="text-xs font-bold text-slate-300 flex items-center space-x-2 bg-slate-950/80 px-3 py-1.5 rounded-xl border border-slate-800 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filterConfig.onlySafeCoins}
-                onChange={(e) => handleSliderChange('onlySafeCoins', e.target.checked)}
-                className="accent-emerald-500 w-4 h-4 rounded cursor-pointer"
-              />
-              <span>Only Show Safe Coins</span>
-            </label>
+            <button
+              onClick={toggleAutoScan}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-1.5 border transition-all cursor-pointer ${
+                autoScanEnabled
+                  ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/40'
+                  : 'bg-slate-900 text-slate-400 border-slate-800'
+              }`}
+            >
+              {autoScanEnabled ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
+              <span>{autoScanEnabled ? 'Auto Scan Enabled' : 'Auto Scan Disabled'}</span>
+            </button>
           </div>
         </div>
 
@@ -381,15 +412,15 @@ export default function App() {
         {displayedSignals.length === 0 ? (
           <div className="glass-panel p-12 text-center rounded-2xl space-y-4">
             <Filter className="w-12 h-12 text-slate-600 mx-auto" />
-            <h3 className="text-lg font-bold text-slate-300">No matching safe coins right now</h3>
+            <h3 className="text-lg font-bold text-slate-300">Scanning for early pre-pump safe coins...</h3>
             <p className="text-sm text-slate-500 max-w-md mx-auto">
-              No scanned coins currently meet all strict safety gates ($1k FDV, $1k MC, $1k Liquidity, $1k 5m Volume, Mint/Freeze Revoked). Click "Scan New API" to refresh the live stream.
+              Auto scan is active ({autoScanEnabled ? 'ON' : 'PAUSED'}). Filtering for early coins ($1k-$60k MC, max +150% 5m gain, age &le; 30m, Mint/Freeze Revoked).
             </p>
             <button
               onClick={handleScan}
               className="px-5 py-2.5 rounded-xl bg-slate-800 text-cyan-400 border border-cyan-500/30 hover:bg-slate-700 transition-all font-semibold text-sm cursor-pointer"
             >
-              Run DEX Screener Scan
+              Run DEX Screener Scan Now
             </button>
           </div>
         ) : (
@@ -451,7 +482,7 @@ export default function App() {
                           <ShieldCheck className="w-3.5 h-3.5" />
                           <span>{token.score}/100 Score</span>
                         </div>
-                        <span className="text-[10px] text-emerald-400 font-semibold mt-1">✓ SAFE VERIFIED</span>
+                        <span className="text-[10px] text-emerald-400 font-semibold mt-1">✓ EARLY SAFE GEM</span>
                       </div>
                     </div>
 
@@ -487,7 +518,7 @@ export default function App() {
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
                       <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
                         <DollarSign className="w-3 h-3 text-emerald-400" />
-                        <span>Market Cap ($1k min)</span>
+                        <span>Market Cap</span>
                       </div>
                       <div className="font-extrabold text-emerald-400 mt-0.5 text-sm">
                         ${token.marketCapUsd.toLocaleString()}
@@ -497,7 +528,7 @@ export default function App() {
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
                       <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
                         <Activity className="w-3 h-3 text-amber-400" />
-                        <span>5m Volume ($1k min)</span>
+                        <span>5m Volume</span>
                       </div>
                       <div className="font-extrabold text-white mt-0.5 text-sm">
                         ${token.volume5mUsd.toLocaleString()}
@@ -507,7 +538,7 @@ export default function App() {
                     <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/60">
                       <div className="text-slate-400 flex items-center space-x-1 text-[11px]">
                         <Layers className="w-3 h-3 text-purple-400" />
-                        <span>Liquidity ($1k min)</span>
+                        <span>Liquidity</span>
                       </div>
                       <div className="font-extrabold text-purple-300 mt-0.5 text-sm">
                         ${token.liquidityUsd.toLocaleString()}
