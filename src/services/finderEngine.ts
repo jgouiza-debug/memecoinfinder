@@ -107,10 +107,18 @@ export class FinderEngine {
     const all = Array.from(this.tokenStore.values());
     const config = this.filter.getConfig();
 
-    // Strict filter: If onlySafeCoins is active, show ONLY coins that pass ALL safety filters!
-    const filtered = config.onlySafeCoins
-      ? all.filter((s) => s.passedAllFilters && s.score >= config.minOverallScoreToPass)
-      : all;
+    // Early Pre-Pump Filter:
+    // 1. Must pass safety rules
+    // 2. MC & FDV <= $60,000 (Early micro-cap before major pump)
+    // 3. 5m Price Gain <= +150% (Has NOT mega-pumped yet)
+    // 4. Age <= 30 minutes (Fresh early launch)
+    const filtered = all.filter((s) => {
+      const isEarly = s.marketCapUsd <= 60000 && s.priceChange5mPct <= 150 && s.pairAgeMinutes <= 30;
+      if (config.onlySafeCoins) {
+        return s.passedAllFilters && s.score >= config.minOverallScoreToPass && isEarly;
+      }
+      return isEarly;
+    });
 
     if (this.activePreset === 'top_boosted') {
       return filtered
@@ -123,7 +131,7 @@ export class FinderEngine {
 
   public static getStats(): FinderStats {
     const all = Array.from(this.tokenStore.values());
-    const passed = all.filter((s) => s.passedAllFilters);
+    const passed = all.filter((s) => s.passedAllFilters && s.marketCapUsd <= 60000 && s.priceChange5mPct <= 150);
     const boosted = all.filter((s) => s.isBoosted || s.boostCount > 0);
     const avgScore = all.length > 0 ? all.reduce((acc, s) => acc + s.score, 0) / all.length : 0;
 
