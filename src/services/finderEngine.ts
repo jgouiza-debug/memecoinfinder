@@ -44,6 +44,8 @@ export class FinderEngine {
           maxWashScore: 40,
           minOverallScoreToPass: 70,
           onlySafeCoins: true,
+          requireMintRevoked: true,
+          requireFreezeRevoked: true,
         };
         break;
       case 'high_momentum':
@@ -56,6 +58,8 @@ export class FinderEngine {
           maxWashScore: 50,
           minOverallScoreToPass: 60,
           onlySafeCoins: true,
+          requireMintRevoked: true,
+          requireFreezeRevoked: true,
         };
         break;
       case 'fresh_launches':
@@ -68,6 +72,8 @@ export class FinderEngine {
           maxWashScore: 60,
           minOverallScoreToPass: 50,
           onlySafeCoins: true,
+          requireMintRevoked: true,
+          requireFreezeRevoked: true,
         };
         break;
       case 'top_boosted':
@@ -80,6 +86,8 @@ export class FinderEngine {
           maxWashScore: 50,
           minOverallScoreToPass: 55,
           onlySafeCoins: true,
+          requireMintRevoked: true,
+          requireFreezeRevoked: true,
         };
         break;
       case 'rugcheck_only':
@@ -92,6 +100,8 @@ export class FinderEngine {
           maxWashScore: 100,
           minOverallScoreToPass: 0,
           onlySafeCoins: false,
+          requireMintRevoked: true,
+          requireFreezeRevoked: true,
         };
         break;
       case 'custom':
@@ -124,18 +134,21 @@ export class FinderEngine {
     const config = this.filter.getConfig();
 
     if (this.activePreset === 'rugcheck_only') {
-      // Show ONLY tokens that have ACTUALLY passed RugCheck audit (Gate 0 passed & RugCheck score <= 500)
+      // RugCheck Only Mode: Requires real RugCheck audit pass (Gate 0 passed & RugCheck score <= 500)
       return all
         .filter((s) => s.passedGate0 && s.rugCheckScore <= 500)
         .sort((a, b) => a.rugCheckScore - b.rugCheckScore || b.score - a.score || b.detectedAt - a.detectedAt);
     }
 
+    // Safe Haven & Other Presets: Must strictly pass Gate 0, RugCheck <= 500, and market filters
     const filtered = all.filter((s) => {
+      const passesRugCheckAudit = s.passedGate0 && s.rugCheckScore <= 500;
       const isEarly = s.marketCapUsd <= 60000 && s.priceChange5mPct <= 150 && s.pairAgeMinutes <= 30;
-      if (config.onlySafeCoins) {
-        return s.passedAllFilters && s.score >= config.minOverallScoreToPass && isEarly;
+
+      if (config.onlySafeCoins || this.activePreset === 'safe_haven') {
+        return passesRugCheckAudit && s.passedAllFilters && s.score >= config.minOverallScoreToPass && isEarly;
       }
-      return isEarly;
+      return passesRugCheckAudit && isEarly;
     });
 
     if (this.activePreset === 'top_boosted') {
@@ -280,6 +293,11 @@ export class FinderEngine {
 
     const isBoosted = Boolean((pair?.boosts?.active ?? 0) > 0 || (boostCount ?? 0) > 0);
 
+    // Exact RugCheck risk score feed:
+    // If indexed on RugCheck, rugCheck.score is the real score (0-1000).
+    // If inferred/unindexed, set to 9999 so it fails score checks.
+    const rawRugCheckScore = rugCheck.isInferred ? 9999 : Number(rugCheck.score ?? 0);
+
     const signal: MemeCoinSignal = {
       mint,
       name: pair?.baseToken?.name || fallbackName || 'Unknown Meme',
@@ -303,7 +321,7 @@ export class FinderEngine {
       boostCount: boostCount || pair?.boosts?.active || 0,
       score: evaluation.breakdown.totalScore,
       washScore: evaluation.washScore,
-      rugCheckScore: rugCheck.score,
+      rugCheckScore: rawRugCheckScore,
       passedGate0: evaluation.gate0.passed,
       passedAllFilters: evaluation.passedAll,
       disqualifyReasons: evaluation.disqualifyReasons,
