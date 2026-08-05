@@ -1,5 +1,9 @@
 export class NotificationService {
   private static audioCtx: AudioContext | null = null;
+  private static lastChimeAt = 0;
+
+  /** Minimum gap between chimes. A burst of new gems is one ding, not twenty. */
+  private static readonly CHIME_THROTTLE_MS = 2500;
 
   public static requestPermission(): void {
     if (typeof window !== 'undefined' && 'Notification' in window) {
@@ -12,7 +16,11 @@ export class NotificationService {
   /**
    * Loud, crisp, resonant metallic "DING!" bell sound synthesizer
    */
-  public static playChime(): void {
+  public static playChime(force = false): void {
+    const now = Date.now();
+    if (!force && now - this.lastChimeAt < this.CHIME_THROTTLE_MS) return;
+    this.lastChimeAt = now;
+
     try {
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       if (!this.audioCtx && AudioContextClass) {
